@@ -29,7 +29,7 @@ fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojso
         pointToLayer: function(feature, latlng) {
             return L.circleMarker(latlng, {
                 radius: getRadius(feature.properties.mag),
-                fillColor: getColor(feature.geometry.coordinates[2]),
+                fillColor: getColorForMagnitude(feature.properties.mag), // Use the correct function for magnitude
                 color: "#000",
                 weight: 1,
                 opacity: 1,
@@ -41,3 +41,35 @@ fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojso
         }
     }).addTo(mymap);
 });
+
+function getColorForMagnitude(magnitude) {
+    return magnitude > 5 ? '#d73027' :
+           magnitude > 4 ? '#fc8d59' :
+           magnitude > 3 ? '#fee08b' :
+           magnitude > 2 ? '#d9ef8b' :
+           magnitude > 1 ? '#91cf60' :
+                           '#1a9850';
+}
+
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend'),
+        magnitudes = [0, 1, 2, 3, 4, 5],
+        labels = [],
+        from, to;
+
+    for (var i = 0; i < magnitudes.length; i++) {
+        from = magnitudes[i];
+        to = magnitudes[i + 1];
+
+        labels.push(
+            '<i style="background:' + getColorForMagnitude(from + 1) + '"></i> ' +
+            from + (to ? '&ndash;' + to : '+'));
+    }
+
+    div.innerHTML = labels.join('<br>');
+    return div;
+};
+
+legend.addTo(mymap);
