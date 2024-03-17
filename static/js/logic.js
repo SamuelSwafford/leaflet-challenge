@@ -27,9 +27,10 @@ fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojso
 .then(data => {
     L.geoJSON(data, {
         pointToLayer: function(feature, latlng) {
+            // Use the getColor function here to set fillColor based on the earthquake's depth
             return L.circleMarker(latlng, {
                 radius: getRadius(feature.properties.mag),
-                fillColor: getColorForMagnitude(feature.properties.mag), // Use the correct function for magnitude
+                fillColor: getColor(feature.geometry.coordinates[2]), // This now uses the depth for color
                 color: "#000",
                 weight: 1,
                 opacity: 1,
@@ -42,33 +43,25 @@ fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojso
     }).addTo(mymap);
 });
 
-function getColorForMagnitude(magnitude) {
-    return magnitude > 5 ? '#d73027' :
-           magnitude > 4 ? '#fc8d59' :
-           magnitude > 3 ? '#fee08b' :
-           magnitude > 2 ? '#d9ef8b' :
-           magnitude > 1 ? '#91cf60' :
-                           '#1a9850';
-}
-
 var legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend'),
-        magnitudes = [0, 1, 2, 3, 4, 5],
-        labels = [],
-        from, to;
+        depths = [0, 10, 30, 50, 70, 90],
+        labels = [];
 
-    for (var i = 0; i < magnitudes.length; i++) {
-        from = magnitudes[i];
-        to = magnitudes[i + 1];
+    // Generate a label with a colored square for each depth interval
+    for (var i = 0; i < depths.length; i++) {
+        var from = depths[i];
+        var to = depths[i + 1];
 
+        // Wrap the label text in a div to ensure proper clearing of the float
         labels.push(
-            '<i style="background:' + getColorForMagnitude(from + 1) + '"></i> ' +
-            from + (to ? '&ndash;' + to : '+'));
+            '<i style="background:' + getColor(from + 1) + '"></i> ' +
+            '<div>' + from + (to ? '&ndash;' + to : '+') + ' km</div>');
     }
 
-    div.innerHTML = labels.join('<br>');
+    div.innerHTML = labels.join('');
     return div;
 };
 
